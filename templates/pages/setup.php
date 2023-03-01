@@ -67,6 +67,7 @@ delete_transient( 'revisr_skip_setup' );
 
 					<select name="action" class="revisr-setup-input">
 						<option value="create"><?php _e( 'Yes, create a new repository.', 'revisr' ); ?></option>
+						<option value="clone"><?php _e( 'Yes, clone an existing repository.', 'revisr' ); ?></option>
 						<option value="find"><?php _e( 'No, find an existing repository.', 'revisr' ); ?></option>
 						<option value="skip"><?php _e( 'Skip setup...', 'revisr' ); ?></option>
 					</select>
@@ -160,6 +161,25 @@ delete_transient( 'revisr_skip_setup' );
 
 					<input type="hidden" name="step" value="3" />
 					<button class="button button-primary revisr-setup-input" type="submit"><?php _e( 'Initialize Revisr', 'revisr' ); ?></button>
+
+				<?php elseif ( 'clone' === $action ): ?>
+
+					<p><?php _e( 'Enter the url of the repository to clone.', 'revisr' ); ?></p>
+
+					<input id="revisr-manual-repo-url" class="regular-text revisr-setup-input" name="revisr_manual_repo_url" value="git@github.com:Automattic/themes.git" />
+					<input type="hidden" name="action" value="check" />
+
+					<p><?php _e( 'Enter the path to clone the repository to.', 'revisr' ); ?></p>
+
+					<input id="revisr-manual-repo-path" class="regular-text revisr-setup-input" name="revisr_manual_git_dir" value="wp-content/themes/pub" />
+					<input type="hidden" name="action" value="check" />
+
+					<div class="revisr-setup-nav">
+						<button class="button" type="submit" name="step" value="1"><?php _e( 'Go Back', 'revisr' ); ?></button>
+						<button class="button button-primary" type="submit" style="float:right;" name="step" value="4"><?php _e( 'Clone...', 'revisr' ); ?></button>
+					</div>
+					<div style="clear:both;"></div>
+
 
 				<?php elseif ( 'find' === $action ): ?>
 
@@ -295,6 +315,39 @@ delete_transient( 'revisr_skip_setup' );
 
 				?>
 
+			<?php elseif( '4' === $step ): ?>
+				<?php
+
+					$dir = ABSPATH . filter_input( INPUT_GET, 'revisr_manual_git_dir', FILTER_SANITIZE_STRING );
+					$url = filter_input( INPUT_GET, 'revisr_manual_repo_url', FILTER_SANITIZE_STRING );
+
+					if ( revisr()->git->clone_repo($dir, $url) ) {
+
+						printf('got to here!');
+
+					// Write it to the wp-config file if necessary.
+					$line = "define('REVISR_WORK_TREE', '$dir');";
+					Revisr_Admin::replace_config_line( 'define *\( *\'REVISR_WORK_TREE\'', $line );
+
+						printf( '<p>%s</p><br><a href="%s">%s</a>',
+							__( 'Repository created successfully.', 'revisr' ),
+							get_admin_url( null, 'admin.php?page=revisr' ),
+							__( 'Continue to dashboard.') );
+					} else {
+						printf( '<p>%s</p>', __( 'Error creating repository.', 'revisr' ) );
+					}
+
+					printf('here 2');
+
+					// Refresh the 'Revisr_Git' instance.
+					revisr()->git = new Revisr_Git;
+
+					printf('here 3');
+				?>
+
+
+
+				
 			<?php endif; ?>
 
 			<?php wp_nonce_field( 'revisr_setup_nonce', 'revisr_setup_nonce', false ); ?>

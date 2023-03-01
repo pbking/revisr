@@ -150,6 +150,50 @@ class Revisr_Git_Callback {
 		exit();
 	}
 
+	public function success_clone_repo( $output, $args ) {
+
+		// Updates the repository properties.
+		revisr()->git->is_repo 		= true;
+		revisr()->git->git_dir 		= revisr()->git->get_git_dir();
+		revisr()->git->work_tree 	= revisr()->git->get_work_tree();
+
+		// Clear out any errors.
+		Revisr_Admin::clear_transients();
+
+		/*
+		// Set the default name of the remote.
+		if ( isset( revisr()->git->options['remote_name'] ) && revisr()->git->options['remote_name'] != '' ) {
+			$remote_name = revisr()->git->options['remote_name'];
+		} else {
+			$remote_name = 'origin';
+		}
+
+		// Add the remote URL in Git if already set in the database.
+		if ( isset( revisr()->git->options['remote_url'] ) && revisr()->git->options['remote_url'] != '' ) {
+			revisr()->git->run( 'remote', array( 'add', $remote_name, revisr()->git->options['remote_url'] ) );
+		}
+
+		// Adds an .htaccess file to the "/.git" directory to prevent public access.
+		if ( is_writable( revisr()->git->git_dir ) ) {
+			file_put_contents( revisr()->git->git_dir . DIRECTORY_SEPARATOR . '.htaccess', 'Deny from all' . PHP_EOL );
+		}
+
+		// Fires after the repo has been created.
+		do_action( 'revisr_post_init', $output );
+
+		// Alerts the user.
+		Revisr_Admin::log( __( 'Successfully created a new repository.', 'revisr' ), 'init' );
+
+		// Redirect if necessary (through skipped/legacy setup).
+		if ( ! defined( 'REVISR_SETUP_INIT' ) ) {
+			Revisr_Admin::redirect( get_admin_url() . 'admin.php?page=revisr_settings&init=success' );
+		}
+		*/
+
+		// Return true if we haven't exited already.
+		return true;
+	}
+
 	/**
 	 * Called if the repo initialization was successful.
 	 * Sets up the '.git/config' file for the first time.

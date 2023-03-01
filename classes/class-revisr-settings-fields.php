@@ -81,6 +81,33 @@ class Revisr_Settings_Fields {
 	}
 
 	/**
+	 * Displays/updates the "Username" settings field.
+	 * @access public
+	 */
+	public function git_password_callback() {
+
+		// Update the .git/config if necessary.
+        	if ( $this->is_updated( 'username' ) ) {
+        		revisr()->git->set_config(  'user', 'password', revisr()->options['password'] );
+        	}
+
+		$check_password = revisr()->git->get_config( 'user', 'password' );
+		if ( $check_password ) {
+			$password = $check_password;
+		} else {
+			$password = '';
+		}
+
+		printf(
+            		'<input type="text" id="password" name="revisr_general_settings[password]" value="%s" class="regular-text revisr-text" />
+            		<p class="description revisr-description">%s</p>',
+           		esc_attr( $password ),
+            		__( 'The password to commit with in Git.', 'revisr' )
+        	);
+	}
+
+
+	/**
 	 * Displays/updates the "Email" settings field.
 	 * @access public
 	 */
@@ -129,6 +156,44 @@ class Revisr_Settings_Fields {
 			__( 'If necessary, you can define the installation path to Git here.', 'revisr' )
 		);
 	}
+
+	/**
+	 * Displays/updates the "Local Path" settings field.
+	 * @access public
+	 */
+	public function local_path_callback() {
+
+		$local_path = defined( 'REVISR_WORK_TREE' ) ? REVISR_WORK_TREE : '';
+
+		/*
+		if ( isset( $_GET['settings-updated'] ) ) {
+
+			$dir 	= ABSPATH . revisr()->options['local_path'];
+
+			$line 	= "define('REVISR_WORK_TREE', '$dir');";
+			// Revisr_Admin::replace_config_line( 'define *\( *\'REVISR_WORK_TREE\'', $line );
+			printf($line);
+
+			$line 	= "define('REVISR_GIT_DIR', '$dir/.git');";
+			// Revisr_Admin::replace_config_line( 'define *\( *\'REVISR_GIT_DIR\'', $line );
+			printf($line);
+	
+			$local_path = revisr()->options['local_path'];
+			printf($local_path);
+			die('asdf');
+		}
+		*/
+
+		$local_path = str_replace( ABSPATH, '', $local_path );
+
+		printf(
+			'<input disabled type="text" id="local_path" name="revisr_remote_settings[local_path]" value="%s" class="regular-text revisr-text" placeholder="wp-content/themes/pub" />
+			<p class="description revisr-description">%s</p>',
+			$local_path,
+			__( 'The folder that will be managed by git.', 'revisr' )
+		);
+	}
+
 
 	/**
 	 * Displays/updates the ".gitignore" settings field.

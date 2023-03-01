@@ -83,6 +83,15 @@ class Revisr_Settings {
             'revisr_general_settings',
             'revisr_general_settings'
         );
+
+        add_settings_field(
+            'git_password',
+            __( 'Git Password', 'revisr'),
+            array( $this->settings_fields, 'git_password_callback' ),
+            'revisr_general_settings',
+            'revisr_general_settings'
+        );
+ 
         add_settings_field(
         	'git_path',
         	__( 'Git Path', 'revisr' ),
@@ -90,6 +99,14 @@ class Revisr_Settings {
         	'revisr_general_settings',
         	'revisr_general_settings'
     	);
+        add_settings_field(
+            'local_path',
+            __( 'Local Path', 'revisr'),
+            array( $this->settings_fields, 'local_path_callback' ),
+            'revisr_general_settings',
+            'revisr_general_settings'
+        );
+ 
         add_settings_field(
         	'gitignore',
         	__( 'Files/Directories to ignore', 'revisr'),
@@ -111,14 +128,14 @@ class Revisr_Settings {
     		'revisr_general_settings',
     		'revisr_general_settings'
 		);
-		add_settings_field(
-			'uninstall_on_delete',
-			__( 'Remove data on uninstall?', 'revisr' ),
-			array( $this->settings_fields, 'uninstall_on_delete_callback' ),
-			'revisr_general_settings',
-			'revisr_general_settings'
-		);
-		add_settings_field(
+	add_settings_field(
+		'uninstall_on_delete',
+		__( 'Remove data on uninstall?', 'revisr' ),
+		array( $this->settings_fields, 'uninstall_on_delete_callback' ),
+		'revisr_general_settings',
+		'revisr_general_settings'
+	);
+	add_settings_field(
             'remote_name',
             __( 'Remote Name', 'revisr'),
             array( $this->settings_fields, 'remote_name_callback' ),

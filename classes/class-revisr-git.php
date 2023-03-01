@@ -108,10 +108,29 @@ class Revisr_Git {
 		$git_dir 	= Revisr_Admin::escapeshellarg( "--git-dir=$this->git_dir" );
 		$work_tree 	= Revisr_Admin::escapeshellarg( "--work-tree=$this->work_tree" );
 
+		// TODO: Get stored remote
+		$remote = 'https://github.com/Automattic/themes.git';
+		// TODO: Get stored credentials
+		$credentials = "pbking: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";
+
+		$remote = str_replace( 'https://', 'https://'.$credentials, $remote );
+		$safe_remote = Revisr_Admin::escapeshellarg( "--repo=$remote" );
+
 		// Run the command.
-		chdir( $this->work_tree );
-		exec( "$safe_path $git_dir $work_tree $safe_cmd $safe_args 2>&1", $output, $return_code );
-		chdir( $this->current_dir );
+		if( 'clone' == $safe_cmd ) {
+			exec( "$safe_path $safe_cmd $safe_args 2>&1", $output, $return_code );
+
+		// } elseif( 'push' == $safe_cmd ) {
+		// 	chdir( $this->work_tree );
+		// 	exec( "$safe_path $git_dir $work_tree $safe_cmd $safe_remote $safe_args 2>&1", $output, $return_code );
+		// 	chdir( $this->current_dir );
+	
+		} else {
+			chdir( $this->work_tree );
+			exec( "$safe_path $git_dir $work_tree $safe_cmd $safe_args 2>&1", $output, $return_code );
+			// exec( "$safe_path $git_dir $safe_cmd $safe_args 2>&1", $output, $return_code );
+			chdir( $this->current_dir );
+		}
 
 		// Process the response.
 		$response 			= new Revisr_Git_Callback();
@@ -590,6 +609,11 @@ class Revisr_Git {
 		return $init;
 	}
 
+	public function clone_repo( $dir, $url ) {
+		$clone = $this->run( 'clone', array( $url, $dir ), __FUNCTION__ );
+		return $clone;
+	}
+
 	/**
 	 * Checks if the provided branch is an existing branch.
 	 * @access public
@@ -632,7 +656,16 @@ class Revisr_Git {
 	 * @access public
 	 */
 	public function push() {
-		$push = $this->run( 'push', array( $this->remote, 'HEAD', '--quiet' ), __FUNCTION__, $this->count_unpushed( false ) );
+
+		// TODO: Get stored remote
+		$remote = "https://github.com/Automattic/themes.git";
+
+		// TODO: Get stored credentials
+		$credentials = "pbking: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@";
+
+		$remote = str_replace( 'https://', 'https://'.$credentials, $remote );
+
+		$push = $this->run( 'push', array( $remote, 'HEAD', '--quiet' ), __FUNCTION__, $this->count_unpushed( false ) );
 		return $push;
 	}
 
