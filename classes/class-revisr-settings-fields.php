@@ -87,19 +87,18 @@ class Revisr_Settings_Fields {
 	public function git_password_callback() {
 
 		// Update the .git/config if necessary.
-        	if ( $this->is_updated( 'username' ) ) {
+        	if ( $this->is_updated( 'password' ) ) {
         		revisr()->git->set_config(  'user', 'password', revisr()->options['password'] );
         	}
 
+		$password = '';
 		$check_password = revisr()->git->get_config( 'user', 'password' );
 		if ( $check_password ) {
 			$password = $check_password;
-		} else {
-			$password = '';
 		}
 
 		printf(
-            		'<input type="password" id="password" name="revisr_general_settings[password]" value="%s" class="regular-text revisr-text" />
+            		'<input type="password" id="password" name="revisr_remote_settings[password]" value="%s" class="regular-text revisr-text" />
             		<p class="description revisr-description">%s</p>',
            		esc_attr( $password ),
             		__( 'The password to use for remote operations. (NOTE: This may be a GitHub AccessToken)', 'revisr' )
