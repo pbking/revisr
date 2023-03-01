@@ -657,13 +657,23 @@ class Revisr_Git {
 	 */
 	public function push() {
 
-		// TODO: Get stored remote
-		$remote = "https://github.com/Automattic/themes.git";
+		// Get stored remote
+		$check_remote = $this->run( 'ls-remote', array( '--get-url' ) );
+		if ( false !== $check_remote && is_array( $check_remote ) ) {
+			$remote = $check_remote[0];
+		} else {
+			$remote = '';
+		}
 
-		// TODO: Get stored credentials
-		$credentials = "pbking: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@";
+		// Get stored credentials
+		$git_password = revisr()->git->get_config( 'user', 'password' );
+		$git_username = revisr()->git->get_config( 'user', 'name' );
+		$git_credentials = "";
+		if ( $git_password ) {
+			$git_credentials = $git_username . ":" . $git_password . "@";
+		}
 
-		$remote = str_replace( 'https://', 'https://'.$credentials, $remote );
+		$remote = str_replace( 'https://', 'https://' . $git_credentials, $remote );
 
 		$push = $this->run( 'push', array( $remote, 'HEAD', '--quiet' ), __FUNCTION__, $this->count_unpushed( false ) );
 		return $push;

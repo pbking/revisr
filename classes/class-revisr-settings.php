@@ -85,14 +85,6 @@ class Revisr_Settings {
         );
 
         add_settings_field(
-            'git_password',
-            __( 'Git Password', 'revisr'),
-            array( $this->settings_fields, 'git_password_callback' ),
-            'revisr_general_settings',
-            'revisr_general_settings'
-        );
- 
-        add_settings_field(
         	'git_path',
         	__( 'Git Path', 'revisr' ),
         	array( $this->settings_fields, 'git_path_callback' ),
@@ -149,6 +141,14 @@ class Revisr_Settings {
             'revisr_remote_settings',
             'revisr_remote_settings'
         );
+        add_settings_field(
+            'git_password',
+            __( 'Git Password', 'revisr'),
+            array( $this->settings_fields, 'git_password_callback' ),
+            'revisr_remote_settings',
+            'revisr_remote_settings'
+        );
+ 
         add_settings_field(
         	'webhook_url',
         	__( 'Revisr Webhook URL', 'revisr' ),

@@ -61,9 +61,9 @@ class Revisr_Settings_Fields {
 	public function username_callback() {
 
 		// Update the .git/config if necessary.
-        if ( $this->is_updated( 'username' ) ) {
-        	revisr()->git->set_config(  'user', 'name', revisr()->options['username'] );
-        }
+        	if ( $this->is_updated( 'username' ) ) {
+        		revisr()->git->set_config(  'user', 'name', revisr()->options['username'] );
+        	}
 
 		$check_username = revisr()->git->get_config( 'user', 'name' );
 		if ( $check_username ) {
@@ -73,11 +73,11 @@ class Revisr_Settings_Fields {
 		}
 
 		printf(
-            '<input type="text" id="username" name="revisr_general_settings[username]" value="%s" class="regular-text revisr-text" />
-            <p class="description revisr-description">%s</p>',
-           esc_attr( $username ),
-            __( 'The username to commit with in Git.', 'revisr' )
-        );
+        		'<input type="text" id="username" name="revisr_general_settings[username]" value="%s" class="regular-text revisr-text" />
+        		<p class="description revisr-description">%s</p>',
+        		esc_attr( $username ),
+        		__( 'The username to commit with in Git. This is also used as the username for remote git operations (i.e. GitHub).', 'revisr' )
+        	);
 	}
 
 	/**
@@ -99,10 +99,10 @@ class Revisr_Settings_Fields {
 		}
 
 		printf(
-            		'<input type="text" id="password" name="revisr_general_settings[password]" value="%s" class="regular-text revisr-text" />
+            		'<input type="password" id="password" name="revisr_general_settings[password]" value="%s" class="regular-text revisr-text" />
             		<p class="description revisr-description">%s</p>',
            		esc_attr( $password ),
-            		__( 'The password to commit with in Git.', 'revisr' )
+            		__( 'The password to use for remote operations. (NOTE: This may be a GitHub AccessToken)', 'revisr' )
         	);
 	}
 
