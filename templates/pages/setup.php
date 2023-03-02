@@ -321,9 +321,9 @@ delete_transient( 'revisr_skip_setup' );
 					$dir = ABSPATH . filter_input( INPUT_GET, 'revisr_manual_git_dir', FILTER_SANITIZE_STRING );
 					$url = filter_input( INPUT_GET, 'revisr_manual_repo_url', FILTER_SANITIZE_STRING );
 
+
 					if ( revisr()->git->clone_repo($dir, $url) ) {
 
-						printf('got to here!');
 
 					// Write it to the wp-config file if necessary.
 					$line = "define('REVISR_WORK_TREE', '$dir');";
@@ -337,12 +337,9 @@ delete_transient( 'revisr_skip_setup' );
 						printf( '<p>%s</p>', __( 'Error creating repository.', 'revisr' ) );
 					}
 
-					printf('here 2');
-
 					// Refresh the 'Revisr_Git' instance.
 					revisr()->git = new Revisr_Git;
 
-					printf('here 3');
 				?>
 
 

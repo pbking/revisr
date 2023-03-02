@@ -108,23 +108,9 @@ class Revisr_Git {
 		$git_dir 	= Revisr_Admin::escapeshellarg( "--git-dir=$this->git_dir" );
 		$work_tree 	= Revisr_Admin::escapeshellarg( "--work-tree=$this->work_tree" );
 
-		// TODO: Get stored remote
-		$remote = 'https://github.com/Automattic/themes.git';
-		// TODO: Get stored credentials
-		$credentials = "pbking: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";
-
-		$remote = str_replace( 'https://', 'https://'.$credentials, $remote );
-		$safe_remote = Revisr_Admin::escapeshellarg( "--repo=$remote" );
-
 		// Run the command.
-		if( 'clone' == $safe_cmd ) {
+		if( "'clone'" == $safe_cmd ) {
 			exec( "$safe_path $safe_cmd $safe_args 2>&1", $output, $return_code );
-
-		// } elseif( 'push' == $safe_cmd ) {
-		// 	chdir( $this->work_tree );
-		// 	exec( "$safe_path $git_dir $work_tree $safe_cmd $safe_remote $safe_args 2>&1", $output, $return_code );
-		// 	chdir( $this->current_dir );
-	
 		} else {
 			chdir( $this->work_tree );
 			exec( "$safe_path $git_dir $work_tree $safe_cmd $safe_args 2>&1", $output, $return_code );
