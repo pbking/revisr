@@ -108,10 +108,13 @@ class Revisr_Git {
 		$git_dir 	= Revisr_Admin::escapeshellarg( "--git-dir=$this->git_dir" );
 		$work_tree 	= Revisr_Admin::escapeshellarg( "--work-tree=$this->work_tree" );
 
-		// Run the command.
-		chdir( $this->work_tree );
-		exec( "$safe_path $git_dir $work_tree $safe_cmd $safe_args 2>&1", $output, $return_code );
-		chdir( $this->current_dir );
+		if( "clone" == $command ) {
+			exec( "$safe_path $safe_cmd $safe_args 2>&1", $output, $return_code );
+		} else {
+			chdir( $this->work_tree );
+			exec( "$safe_path $git_dir $work_tree $safe_cmd $safe_args 2>&1", $output, $return_code );
+			chdir( $this->current_dir );
+		}
 
 		// Process the response.
 		$response 			= new Revisr_Git_Callback();
@@ -588,6 +591,18 @@ class Revisr_Git {
 	public function init_repo() {
 		$init = $this->run( 'init', array( '.' ), __FUNCTION__ );
 		return $init;
+	}
+
+
+	/**
+	 * Clones a repository.
+	 * @access public
+	 * @param  string $dir The directory to clone the repo into.
+	 * @param  string $url The URL of the repo to clone.
+	 */
+	public function clone_repo( $dir, $url ) {
+		$clone = $this->run( 'clone', array( $url, $dir ), __FUNCTION__ );
+		return $clone;
 	}
 
 	/**

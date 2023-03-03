@@ -158,6 +158,23 @@ class Revisr_Settings_Fields {
 	}
 
 	/**
+	 * Displays/updates the "Local Path" settings field.
+	 * @access public
+	 */
+	public function local_path_callback() {
+
+		$local_path = defined( 'REVISR_WORK_TREE' ) ? REVISR_WORK_TREE : '';
+		$local_path = str_replace( ABSPATH, '', $local_path );
+
+		printf(
+			'<input disabled type="text" id="local_path" name="revisr_remote_settings[local_path]" value="%s" class="regular-text revisr-text" placeholder="wp-content/themes/pub" />
+			<p class="description revisr-description">%s</p>',
+			$local_path,
+			__( 'The folder that is managed by git.', 'revisr' )
+		);
+	}
+
+	/**
 	 * Displays/updates the "Automatic Backups" settings field.
 	 * @access public
 	 */
