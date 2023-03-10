@@ -260,14 +260,18 @@ class Revisr_Git {
 	 * @access public
 	 * @param string $branch The branch to checkout.
 	 */
-	public function checkout( $branch, $new_branch = false ) {
+	public function checkout( $branch, $new_branch = false, $ajax_btn = true ) {
 		if ( $new_branch ) {
 			$args = array( '-b', $branch, '-q' );
 		} else {
 			$args = array( $branch, '-q' );
 		}
 
-		$this->run( 'checkout', $args, __FUNCTION__ );
+		if ( $ajax_btn ) {
+			$this->run( 'checkout', $args, __FUNCTION__ );
+		} else {
+			return $this->run( 'checkout', $args );
+		}
 	}
 
 	/**

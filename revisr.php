@@ -401,3 +401,83 @@ revisr();
 
 // Register the activation hook.
 register_activation_hook( __FILE__, array( 'Revisr', 'install' ) );
+
+function revisr_editor_enqueue() {
+	$asset_file = include( plugin_dir_path( __FILE__ ) . 'build/index.asset.php');
+
+	wp_register_script(
+		'revisr-editor-script',
+		plugins_url( 'build/index.js', __FILE__ ),
+		$asset_file['dependencies'],
+		$asset_file['version']
+	);
+	wp_enqueue_script(
+		'revisr-editor-script',
+	);
+}
+add_action( 'enqueue_block_editor_assets', 'revisr_editor_enqueue' );
+
+add_action( 'rest_api_init', function () {
+	register_rest_route( 'revisr/v1', '/info', array(
+		'methods' => 'GET',
+		'callback' => 'api_get_repo_info',
+	) );
+	register_rest_route( 'revisr/v1', '/branches', array(
+		'methods' => 'GET',
+		'callback' => 'api_get_remote_branches',
+	) );
+	register_rest_route( 'revisr/v1', '/checkout', array(
+		'methods' => 'POST',
+		'callback' => 'api_checkout',
+	) );
+} );
+
+function api_checkout( WP_REST_Request $request ) {
+	$git = new Revisr_Git();
+	$branch = $request->get_param( 'branch' );
+	$response = $git->checkout( $branch, false, false );
+	if ( $response === false ) {
+		return new WP_REST_Response( array(
+			'status' => 'FAILURE',
+			'message' => 'Something went wrong.',
+		) );
+	}
+	return api_get_repo_info();
+}
+
+function api_get_remote_branches ( WP_REST_Request $request ) {
+	$git = new Revisr_Git();
+	if($git->is_repo) {
+		$branches = $git->get_branches( true );
+		return new WP_REST_Response( array(
+			'status' => 'OK',
+			'branches' => $branches,
+      		) );
+	} else {
+		return new WP_REST_Response( array(
+			'status' => 'NO_REPOSITORY'
+      		) );
+	}
+}
+
+function api_get_repo_info ( WP_REST_Request $request = null ) {
+	$git = new Revisr_Git();
+	if($git->is_repo) {
+		$git->fetch();
+		$branch = $git->current_branch();
+		$count_unpushed = $git->count_unpushed(false);
+		$count_untracked = $git->count_untracked();
+		$count_unpulled = $git->count_unpulled(false);
+		return new WP_REST_Response( array(
+        		'status' => 'OK',
+        		'branch' => $branch,
+			'count_unpulled' => $count_unpulled,
+			'count_unpushed' => $count_unpushed,
+			'count_untracked' => $count_untracked,
+      		) );
+	} else {
+		return new WP_REST_Response( array(
+        		'status' => 'NO_REPOSITORY'
+      		) );
+	}
+}
