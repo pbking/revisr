@@ -19,6 +19,7 @@
         "@wordpress/components": "^23.5.0",
         "@wordpress/element": "^5.5.0",
         "@wordpress/icons": "^9.19.0",
+        "@wordpress/primitives": "^3.26.0",
         "@wordpress/scripts": "^25.5.1",
         "grunt": "~0.4.2",
         "grunt-wp-i18n": "~0.4.0"
