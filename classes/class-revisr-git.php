@@ -640,9 +640,13 @@ class Revisr_Git {
 	 * @access public
 	 * @param  array $commits The commits we're pulling (used in callback).
 	 */
-	public function pull( $commits = array() ) {
+	public function pull( $commits = array(), $ajax_btn = true ) {
 		$this->reset();
-		$pull = $this->run( 'pull', array( '-Xtheirs', '--quiet', $this->remote, $this->branch ), __FUNCTION__, $commits );
+		if( $ajax_btn ) {
+			$pull = $this->run( 'pull', array( '-Xtheirs', '--quiet', $this->remote, $this->branch ), __FUNCTION__, $commits );
+		} else {
+			$pull = $this->run( 'pull', array( '-Xtheirs', '--quiet', $this->remote, $this->branch ), null, $commits );
+		}
 		return $pull;
 	}
 

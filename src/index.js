@@ -115,12 +115,21 @@ class RevisrPluginComponent extends Component {
 	}
 
 	render() {
-		let { info, branches, switchBranch } = this.props;
+		let { info, branches, switchBranch, pullChangesFromRemote } = this.props;
 
 		let statusMarkup =  <p>No Repository Setup</p>;
 
 
 		if( info.status === "OK" ) {
+
+			let pullMarkup = info.count_unpulled > 0 ? 
+				<>
+					<Button variant="secondary" label={ __('Pull Changes from Remote') } onClick={ pullChangesFromRemote }>
+						{ sprintf( __('Pull %s change(s) from remote' ), info.count_unpulled ) }
+					</Button>
+				</>
+				: '';
+
 
 			let changesMarkup = info.count_untracked > 0 ? 
 				<>
@@ -139,7 +148,8 @@ class RevisrPluginComponent extends Component {
 					onChange={ switchBranch }
 					labelPosition="top"
 				/>
-	
+
+				{ pullMarkup }
 				{ changesMarkup }
 
 				<pre>{JSON.stringify(info, null, ' ')}</pre>
@@ -184,6 +194,19 @@ const RevisrPluginComponentComposed = compose( [
 							dispatch( 'revisr/store' ).setInfo( response );
 						} else {
 							alert('something went wrong switching branches');
+						}
+					} );
+			},
+			pullChangesFromRemote: function() {
+				apiFetch ( { 
+						path: "/revisr/v1/pull", 
+						method: "POST"
+					} )
+					.then( ( response ) => {
+						if(response.status === 'OK') {
+							dispatch( 'revisr/store' ).setInfo( response );
+						} else {
+							alert('something went wrong pulling changes');
 						}
 					} );
 			}
