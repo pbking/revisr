@@ -434,7 +434,23 @@ add_action( 'rest_api_init', function () {
 		'methods' => 'POST',
 		'callback' => 'api_pull_changes',
 	) );
+	register_rest_route( 'revisr/v1', '/revert', array(
+		'methods' => 'POST',
+		'callback' => 'api_revert_changes',
+	) );
 } );
+
+function api_revert_changes( WP_REST_Request $request ) {
+	$git = new Revisr_Git();
+	$response = $git->revert('HEAD');
+	if ( $response === false ) {
+		return new WP_REST_Response( array(
+			'status' => 'FAILURE',
+			'message' => 'Something went wrong.',
+		) );
+	}
+	return api_get_repo_info();
+}
 
 function api_pull_changes( WP_REST_Request $request ) {
 	$git = new Revisr_Git();

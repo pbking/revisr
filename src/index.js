@@ -7,8 +7,15 @@ import { Fragment } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { createReduxStore, register } from '@wordpress/data';
-import { Button, SelectControl, MenuGroup, MenuItem, TextControl } from '@wordpress/components';
+import { Button, SelectControl, RadioControl, ToggleControl, MenuGroup, MenuItem, TextareaControl, TextControl } from '@wordpress/components';
 import { SVG, Path } from '@wordpress/primitives';
+import {
+	__experimentalNavigatorProvider as NavigatorProvider,
+	__experimentalNavigatorScreen as NavigatorScreen,
+	__experimentalNavigatorButton as NavigatorButton,
+	__experimentalNavigatorToParentButton as NavigatorToParentButton,
+	__experimentalUseNavigator as useNavigator,
+} from '@wordpress/components';
 
 const revisrIcon = ( <SVG version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="245.8 381.1 81.9 89.5">
 	<Path d="M295.2,387.2c-5.1,5.1-5.1,13.3,0,18.3c3.8,3.8,9.3,4.7,13.9,2.9l7.2-7.2c1.8-4.7,0.9-10.2-2.9-13.9 C308.5,382.1,300.3,382.1,295.2,387.2z M309.7,401.6c-2.9,2.9-7.6,2.9-10.6,0c-2.9-2.9-2.9-7.6,0-10.6c2.9-2.9,7.6-2.9,10.6,0 C312.6,394,312.6,398.7,309.7,401.6z"/>
@@ -41,6 +48,17 @@ const actions = {
 			"branches": branches
 		}
 	},
+	getCommitDetails() {
+		return {
+			"type": "GET_COMMIT_DETAILS",
+		}
+	},
+	setCommitDetails( commitDetails ) {
+		return {
+			"type": "SET_COMMIT_DETAILS",
+			"commitDetails": commitDetails
+		}
+	}
 };
 
 const DEFAULT_STATE = {
@@ -60,6 +78,11 @@ const store = createReduxStore( 'revisr/store', {
 					...state,
 					branches: action.branches
 				}
+			case 'SET_COMMIT_DETAILS':
+				return {
+					...state,
+					commitDetails: action.commitDetails
+				}
 			default:
 				return state;
 		}
@@ -74,6 +97,15 @@ const store = createReduxStore( 'revisr/store', {
 			const { branches } = state;
 			return branches;
 		},
+		getCommitDetails( state ) {
+			const { commitDetails } = state;
+			return commitDetails || {
+				commitNewBranch: false,
+				openPullRequestForNewBranch: true,
+				branchName: '',
+				commitMessage: '' 
+			};
+		}
 	},
 
 	controls: {
@@ -101,11 +133,8 @@ register(store);
 
 class RevisrPluginComponent extends Component {
 
-	openSaveWizard() {
-		alert('open Save Wizard');
-	}
-
 	getBranchOptions( branches ) {
+		if (!branches ) return [];
 		return branches.map((branch)=>{
 			branch = branch.replace('origin/HEAD -> ', '');
 			branch = branch.replace('origin/', '');
@@ -118,10 +147,23 @@ class RevisrPluginComponent extends Component {
 	}
 
 	render() {
-		let { info, branches, switchBranch, pullChangesFromRemote } = this.props;
+		let { 
+			info, 
+			branches, 
+			switchBranch, 
+			pullChangesFromRemote, 
+			revertChanges,
+			commitDetails,
+			setCommitDetails
+		} = this.props;
+
+		const onSubmitSrc = ( event ) => {
+			event.preventDefault();
+
+			console.log('Let us commit!', event, commitDetails );
+		};
 
 		let statusMarkup =  <p>No Repository Setup</p>;
-
 
 		if( info.status === "OK" ) {
 
@@ -137,21 +179,22 @@ class RevisrPluginComponent extends Component {
 			let changesMarkup = info.count_untracked > 0 ? 
 				<>
 					<p>You have { info.count_untracked } changes.</p> 
-					<Button variant="primary" label={ __('Commit Changes...') } onClick={ this.openSaveWizard }>
-						{ __('Commit Changes...') }
+					<pre>LIST OF CHANGED FILES GOES HERE</pre>
+					<Button variant="secondary" label={ __('Revert these changes') } onClick={ revertChanges }>
+						{ __('Revert these changes') }
 					</Button>
+					<NavigatorButton path="/commit" variant="primary" >
+						{ __('Commit Changes...') }
+      					</NavigatorButton>
 				</>
 				: <p>No changes to commit.</p>;
 
 			statusMarkup = <>
-				<SelectControl
-					label={ __( 'Current branch' ) }
-					options={ this.getBranchOptions( branches.branches ) }
-					value={ info.branch }
-					onChange={ switchBranch }
-					labelPosition="top"
-				/>
-
+				<p>Current branch: { info.branch }</p>
+				<NavigatorButton variant="secondary" path="/switchBranch" >
+					{ __('Change branch ...') }
+				</NavigatorButton>
+	
 				{ pullMarkup }
 				{ changesMarkup }
 
@@ -159,6 +202,63 @@ class RevisrPluginComponent extends Component {
 			</>; 
 
 		}
+
+		const commitFormMarkup = <>
+			<form onSubmit={ onSubmitSrc } >
+				<ToggleControl
+					label={ __( 'Do you want to put these changes into a new branch?' ) }
+					checked={ commitDetails.commitNewBranch }
+					onChange={ ( value ) =>
+						setCommitDetails( { ...commitDetails,
+							commitNewBranch: value
+						} )
+					}
+				/>
+
+				{ commitDetails.commitNewBranch && (<>
+				<ToggleControl
+					label={ __( 'Do you want to open a Pull Request for this new branch?' ) }
+					checked={ commitDetails.openPullRequestForNewBranch }
+					onChange={ ( value ) =>
+						setCommitDetails( { ...commitDetails,
+							openPullRequestForNewBranch: value
+						} )	
+					}
+				/>
+				<TextControl label="branch" labelposition="top" placeholder="add/theme-name" required
+					value={ commitDetails.branchName }
+					onChange={ ( value ) =>	
+						setCommitDetails( { ...commitDetails,
+							branchName: value
+						} )
+					}
+				/>
+				</>)}
+
+				<TextareaControl label="Describe the changes you are making" labelposition="top" required
+					value={ commitDetails.commitMessage }
+					onChange={ ( value ) =>	
+						setCommitDetails( { ...commitDetails,
+							commitMessage: value
+						} )
+					}
+				/>
+
+				<Button type="submit" variant="primary">{ __('Commit changes') } </Button>
+
+			</form>
+		</>;
+
+		const switchBranchMarkup = <>
+			<SelectControl
+				label={ __( 'Current branch' ) }
+				options={ this.getBranchOptions( branches?.branches ) }
+				value={ info.branch }
+				onChange={ switchBranch }
+				labelPosition="top"
+				required
+			/>
+		</>;
 
 		return (
 			<Fragment>
@@ -168,9 +268,21 @@ class RevisrPluginComponent extends Component {
 				</PluginSidebarMoreMenuItem>
 
 				<PluginSidebar name="revisr-sidebar" icon={ revisrIcon } title={ __( 'Revisr' ) }>
-					{ statusMarkup }
-				</PluginSidebar>
 
+				<NavigatorProvider initialPath="/">
+					<NavigatorScreen path="/">
+						{ statusMarkup }
+					</NavigatorScreen>
+					<NavigatorScreen path="/switchBranch">
+						{ switchBranchMarkup }
+					</NavigatorScreen>
+					<NavigatorScreen path="/commit">
+						{ commitFormMarkup }
+					</NavigatorScreen>
+	
+				</NavigatorProvider>
+
+				</PluginSidebar>
 			</Fragment>
 		)
 	}
@@ -181,10 +293,14 @@ const RevisrPluginComponentComposed = compose( [
 		return {
 			info: select( 'revisr/store' ).getInfo(),
 			branches: select( 'revisr/store' ).getBranches(),
+			commitDetails: select( 'revisr/store' ).getCommitDetails(),
 		};
   	} ),
 	withDispatch( function( dispatch  ) {
 		return {
+			setCommitDetails: (commitDetails)=>{
+				dispatch( 'revisr/store' ).setCommitDetails(commitDetails)
+			},
 			switchBranch: function( branch) {
 				apiFetch ( { 
 						path: "/revisr/v1/checkout", 
@@ -202,6 +318,19 @@ const RevisrPluginComponentComposed = compose( [
 			pullChangesFromRemote: function() {
 				apiFetch ( { 
 						path: "/revisr/v1/pull", 
+						method: "POST"
+					} )
+					.then( ( response ) => {
+						if(response.status === 'OK') {
+							dispatch( 'revisr/store' ).setInfo( response );
+						} else {
+							alert('something went wrong pulling changes');
+						}
+					} );
+			},
+			revertChanges: function() {
+				apiFetch ( { 
+						path: "/revisr/v1/revert", 
 						method: "POST"
 					} )
 					.then( ( response ) => {
