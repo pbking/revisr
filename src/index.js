@@ -125,6 +125,7 @@ const store = createReduxStore( 'revisr/store', {
 			const { commitDetails } = state;
 			return commitDetails || {
 				commitNewBranch: false,
+				pushChanges: true,
 				openPullRequestForNewBranch: true,
 				branchName: '',
 				commitMessage: '' 
@@ -211,8 +212,8 @@ class RevisrPluginComponent extends Component {
 
 			if (fileStatus && fileStatus.status === "OK") {
 				fileStatusMarkup = <><ul>
-				{ fileStatus.files.map((file)=>{
-					return <li>{ file }</li>
+				{ fileStatus.files.map((file, i)=>{
+					return <li key={i}>{ file }</li>
 				})}
 				</ul></>
 			}
@@ -253,6 +254,16 @@ class RevisrPluginComponent extends Component {
 					onChange={ ( value ) =>
 						setCommitDetails( { ...commitDetails,
 							commitNewBranch: value
+						} )
+					}
+				/>
+
+				<ToggleControl
+					label={ __( 'Do you want to push these changes to the remote repository?' ) }
+					checked={ commitDetails.pushChanges }
+					onChange={ ( value ) =>
+						setCommitDetails( { ...commitDetails,
+							pushChanges: value
 						} )
 					}
 				/>
