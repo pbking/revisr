@@ -108,10 +108,13 @@ class Revisr_Git {
 		$git_dir 	= Revisr_Admin::escapeshellarg( "--git-dir=$this->git_dir" );
 		$work_tree 	= Revisr_Admin::escapeshellarg( "--work-tree=$this->work_tree" );
 
-		// Run the command.
-		chdir( $this->work_tree );
-		exec( "$safe_path $git_dir $work_tree $safe_cmd $safe_args 2>&1", $output, $return_code );
-		chdir( $this->current_dir );
+		if( "clone" == $command ) {
+			exec( "$safe_path $safe_cmd $safe_args 2>&1", $output, $return_code );
+		} else {
+			chdir( $this->work_tree );
+			exec( "$safe_path $git_dir $work_tree $safe_cmd $safe_args 2>&1", $output, $return_code );
+			chdir( $this->current_dir );
+		}
 
 		// Process the response.
 		$response 			= new Revisr_Git_Callback();
@@ -134,9 +137,15 @@ class Revisr_Git {
 	 */
 	public function check_work_tree( $dir = '' ) {
 
+		$this->is_repo = false;
+
 		// If no dir provided, use constant.
 		if ( '' === $dir ) {
 			$dir = $this->get_work_tree();
+		}
+
+		if ( ! $dir) {
+			return false;
 		}
 
 		// Definitely bail if not a directory.
@@ -151,10 +160,10 @@ class Revisr_Git {
 
 		// If not, set the is_repo flag to false.
 		if ( ! $git_toplevel ) {
-			$this->is_repo = false;
 			return false;
 		}
 
+		$this->is_repo = true;
 		return true;
 	}
 
@@ -227,7 +236,8 @@ class Revisr_Git {
 		if ( defined( 'REVISR_WORK_TREE' ) && is_dir( REVISR_WORK_TREE ) ) {
 			$work_tree = REVISR_WORK_TREE;
 		} else {
-			$work_tree = ABSPATH;
+			return null;
+			// $work_tree = ABSPATH;
 		}
 
 		// Remove trailing slash.
@@ -588,6 +598,18 @@ class Revisr_Git {
 	public function init_repo() {
 		$init = $this->run( 'init', array( '.' ), __FUNCTION__ );
 		return $init;
+	}
+
+
+	/**
+	 * Clones a repository.
+	 * @access public
+	 * @param  string $dir The directory to clone the repo into.
+	 * @param  string $url The URL of the repo to clone.
+	 */
+	public function clone_repo( $dir, $url ) {
+		$clone = $this->run( 'clone', array( $url, $dir ), __FUNCTION__ );
+		return $clone;
 	}
 
 	/**

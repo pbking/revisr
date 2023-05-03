@@ -151,6 +151,27 @@ class Revisr_Git_Callback {
 	}
 
 	/**
+	 * Callback for a successful clone.
+	 */
+	public function success_clone_repo( $output, $args ) {
+
+		// Updates the repository properties.
+		revisr()->git->is_repo 		= true;
+		revisr()->git->git_dir 		= revisr()->git->get_git_dir();
+		revisr()->git->work_tree 	= revisr()->git->get_work_tree();
+
+		// Clear out any errors.
+		Revisr_Admin::clear_transients();
+
+		// Adds an .htaccess file to the "/.git" directory to prevent public access.
+		if ( is_writable( revisr()->git->git_dir ) ) {
+			file_put_contents( revisr()->git->git_dir . DIRECTORY_SEPARATOR . '.htaccess', 'Deny from all' . PHP_EOL );
+		}
+
+		// Return true if we haven't exited already.
+		return true;
+	}
+	/**
 	 * Called if the repo initialization was successful.
 	 * Sets up the '.git/config' file for the first time.
 	 * @access public
