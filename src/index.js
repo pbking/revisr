@@ -31,9 +31,23 @@ const actions = {
 		}
 	},
 	setInfo( status ) {
+		console.log('setting info', status);
 		return {
 			"type": "SET_INFO",
 			"status": status
+		}
+	},
+	getFileStatus() {
+		return {
+			"type": "GET_FILE_STATUS",
+			"path": "/revisr/v1/status"
+		}
+	},
+	setFileStatus( fileStatus ) {
+		console.log('setting', fileStatus);
+		return {
+			"type": "SET_FILE_STATUS",
+			"fileStatus": fileStatus
 		}
 	},
 	getBranches() {
@@ -73,6 +87,12 @@ const store = createReduxStore( 'revisr/store', {
 					...state,
 					status: action.status
 				}
+			case 'SET_FILE_STATUS':
+				console.log('action', action);
+				return {
+					...state,
+					fileStatus: action.fileStatus
+				}
 			case 'SET_BRANCHES':
 				return {
 					...state,
@@ -93,6 +113,10 @@ const store = createReduxStore( 'revisr/store', {
 			const { status } = state;
 			return status;
 		},
+		getFileStatus( state ) {
+			const { fileStatus } = state;
+			return fileStatus;
+		},
 		getBranches( state ) {
 			const { branches } = state;
 			return branches;
@@ -112,6 +136,9 @@ const store = createReduxStore( 'revisr/store', {
 		GET_INFO( action ) {
 			return apiFetch( { path: action.path } );
 		},
+		GET_FILE_STATUS( action ) {
+			return apiFetch( { path: action.path } );
+		},
 		GET_BRANCHES( action ) {
 			return apiFetch( { path: action.path } );
 		},
@@ -121,6 +148,10 @@ const store = createReduxStore( 'revisr/store', {
 		*getInfo() {
     			const status = yield actions.getInfo();
     			return actions.setInfo( status );
+		},
+		*getFileStatus() {
+			const fileStatus = yield actions.getFileStatus();
+			return actions.setFileStatus( fileStatus );
 		},
 		*getBranches() {
 			const branches = yield actions.getBranches();
@@ -149,6 +180,7 @@ class RevisrPluginComponent extends Component {
 	render() {
 		let { 
 			info, 
+			fileStatus,
 			branches, 
 			switchBranch, 
 			pullChangesFromRemote, 
@@ -175,11 +207,21 @@ class RevisrPluginComponent extends Component {
 				</>
 				: '';
 
+			let fileStatusMarkup = '<pre>Not Yet</pre>';
+
+			if (fileStatus && fileStatus.status === "OK") {
+				fileStatusMarkup = <><ul>
+				{ fileStatus.files.map((file)=>{
+					return <li>{ file }</li>
+				})}
+				</ul></>
+			}
 
 			let changesMarkup = info.count_untracked > 0 ? 
 				<>
 					<p>You have { info.count_untracked } changes.</p> 
-					<pre>LIST OF CHANGED FILES GOES HERE</pre>
+
+					{ fileStatusMarkup }
 					<Button variant="secondary" label={ __('Revert these changes') } onClick={ revertChanges }>
 						{ __('Revert these changes') }
 					</Button>
@@ -292,6 +334,7 @@ const RevisrPluginComponentComposed = compose( [
   	withSelect( ( select ) => {
 		return {
 			info: select( 'revisr/store' ).getInfo(),
+			fileStatus: select( 'revisr/store' ).getFileStatus(),
 			branches: select( 'revisr/store' ).getBranches(),
 			commitDetails: select( 'revisr/store' ).getCommitDetails(),
 		};

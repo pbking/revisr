@@ -61,6 +61,12 @@ final class Revisr {
 	public $git;
 
 	/**
+	 * Stores the Revisr_API object.
+	 * @var Revisr_API
+	 */
+	public $api;
+
+	/**
 	 * Stores the Revisr_Activity_Table object.
 	 * @var Revisr_Activity_Table
 	 */
@@ -164,6 +170,9 @@ final class Revisr {
 			self::$instance->load_admin_hooks();
 		}
 
+		// I don't know how to make this auto-load.  ¯\_(ツ)_/¯
+		require_once REVISR_PATH . 'classes/class-revisr-api.php';
+
 		// Fires after the plugin has loaded.
 		do_action( 'revisr_loaded' );
 
@@ -259,8 +268,8 @@ final class Revisr {
 	private function load_admin_hooks() {
 
 		// Load necessary classes into the instance.
-		self::$instance->git 				= new Revisr_Git();
-		self::$instance->db 				= new Revisr_DB();
+		self::$instance->git 			= new Revisr_Git();
+		self::$instance->db 			= new Revisr_DB();
 		self::$instance->activity_table 	= new Revisr_Activity_Table();
 		self::$instance->branch_table 		= new Revisr_Branch_Table();
 		self::$instance->commits_table 		= new Revisr_Commits_Table();
@@ -417,99 +426,3 @@ function revisr_editor_enqueue() {
 }
 add_action( 'enqueue_block_editor_assets', 'revisr_editor_enqueue' );
 
-add_action( 'rest_api_init', function () {
-	register_rest_route( 'revisr/v1', '/info', array(
-		'methods' => 'GET',
-		'callback' => 'api_get_repo_info',
-	) );
-	register_rest_route( 'revisr/v1', '/branches', array(
-		'methods' => 'GET',
-		'callback' => 'api_get_remote_branches',
-	) );
-	register_rest_route( 'revisr/v1', '/checkout', array(
-		'methods' => 'POST',
-		'callback' => 'api_checkout',
-	) );
-	register_rest_route( 'revisr/v1', '/pull', array(
-		'methods' => 'POST',
-		'callback' => 'api_pull_changes',
-	) );
-	register_rest_route( 'revisr/v1', '/revert', array(
-		'methods' => 'POST',
-		'callback' => 'api_revert_changes',
-	) );
-} );
-
-function api_revert_changes( WP_REST_Request $request ) {
-	$git = new Revisr_Git();
-	$response = $git->revert('HEAD');
-	if ( $response === false ) {
-		return new WP_REST_Response( array(
-			'status' => 'FAILURE',
-			'message' => 'Something went wrong.',
-		) );
-	}
-	return api_get_repo_info();
-}
-
-function api_pull_changes( WP_REST_Request $request ) {
-	$git = new Revisr_Git();
-	$response = $git->pull( null, false );
-	if ( $response === false ) {
-		return new WP_REST_Response( array(
-			'status' => 'FAILURE',
-			'message' => 'Something went wrong.',
-		) );
-	}
-	return api_get_repo_info();
-}
-
-function api_checkout( WP_REST_Request $request ) {
-	$git = new Revisr_Git();
-	$branch = $request->get_param( 'branch' );
-	$response = $git->checkout( $branch, false, false );
-	if ( $response === false ) {
-		return new WP_REST_Response( array(
-			'status' => 'FAILURE',
-			'message' => 'Something went wrong.',
-		) );
-	}
-	return api_get_repo_info();
-}
-
-function api_get_remote_branches ( WP_REST_Request $request ) {
-	$git = new Revisr_Git();
-	if($git->is_repo) {
-		$branches = $git->get_branches( true );
-		return new WP_REST_Response( array(
-			'status' => 'OK',
-			'branches' => $branches,
-      		) );
-	} else {
-		return new WP_REST_Response( array(
-			'status' => 'NO_REPOSITORY'
-      		) );
-	}
-}
-
-function api_get_repo_info ( WP_REST_Request $request = null ) {
-	$git = new Revisr_Git();
-	if($git->is_repo) {
-		$git->fetch();
-		$branch = $git->current_branch();
-		$count_unpushed = $git->count_unpushed(false);
-		$count_untracked = $git->count_untracked();
-		$count_unpulled = $git->count_unpulled(false);
-		return new WP_REST_Response( array(
-        		'status' => 'OK',
-        		'branch' => $branch,
-			'count_unpulled' => $count_unpulled,
-			'count_unpushed' => $count_unpushed,
-			'count_untracked' => $count_untracked,
-      		) );
-	} else {
-		return new WP_REST_Response( array(
-        		'status' => 'NO_REPOSITORY'
-      		) );
-	}
-}
