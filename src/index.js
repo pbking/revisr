@@ -365,7 +365,7 @@ const RevisrPluginComponentComposed = compose( [
 						if(response.status === 'OK') {
 							dispatch( 'revisr/store' ).setInfo( response );
 						} else {
-							alert('something went wrong switching branches');
+							alert('something went wrong switching branches: ' + response.message );
 						}
 					} );
 			},
@@ -378,7 +378,7 @@ const RevisrPluginComponentComposed = compose( [
 						if(response.status === 'OK') {
 							dispatch( 'revisr/store' ).setInfo( response );
 						} else {
-							alert('something went wrong pulling changes');
+							alert('Something went wrong pulling changes: ' + response.message );
 						}
 					} );
 			},
@@ -391,7 +391,7 @@ const RevisrPluginComponentComposed = compose( [
 						if(response.status === 'OK') {
 							dispatch( 'revisr/store' ).setInfo( response );
 						} else {
-							alert('something went wrong pulling changes');
+							alert('something went wrong reverting changes: ' + response.message );
 						}
 					} );
 			}

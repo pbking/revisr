@@ -76,7 +76,7 @@ function api_revert_changes( WP_REST_Request $request ) {
 
 function api_pull_changes( WP_REST_Request $request ) {
 	$git = new Revisr_Git_API();
-	$response = $git->pull( null, false );
+	$response = $git->pull();
 	if ( ! $response->success ) {
 		return new WP_REST_Response( array(
 			'status' => 'FAILURE',
@@ -331,8 +331,7 @@ class Revisr_Git_API {
 	 * @param  array $commits The commits we're pulling (used in callback).
 	 */
 	public function pull( $commits = array() ) {
-		$this->reset();
-		return $this->run( 'pull', array( '-Xtheirs', '--quiet', $this->remote, $this->branch ), null, $commits );
+		return $this->run( 'pull', array( '-Xtheirs', '--quiet', $this->revisr_git->remote, $this->revisr_git->branch ), null, $commits );
 	}
 
 	/**
