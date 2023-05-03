@@ -31,7 +31,6 @@ const actions = {
 		}
 	},
 	setInfo( status ) {
-		console.log('setting info', status);
 		return {
 			"type": "SET_INFO",
 			"status": status
@@ -44,7 +43,6 @@ const actions = {
 		}
 	},
 	setFileStatus( fileStatus ) {
-		console.log('setting', fileStatus);
 		return {
 			"type": "SET_FILE_STATUS",
 			"fileStatus": fileStatus
@@ -72,6 +70,17 @@ const actions = {
 			"type": "SET_COMMIT_DETAILS",
 			"commitDetails": commitDetails
 		}
+	},
+	getCreateBranchDetails() {
+		return {
+			"type": "GET_CREATE_BRANCH_DETAILS",
+		}
+	},
+	setCreateBranchDetails( createBranchDetails ) {
+		return {
+			"type": "SET_CREATE_BRANCH_DETAILS",
+			"createBranchDetails": createBranchDetails
+		}
 	}
 };
 
@@ -88,7 +97,6 @@ const store = createReduxStore( 'revisr/store', {
 					status: action.status
 				}
 			case 'SET_FILE_STATUS':
-				console.log('action', action);
 				return {
 					...state,
 					fileStatus: action.fileStatus
@@ -102,6 +110,11 @@ const store = createReduxStore( 'revisr/store', {
 				return {
 					...state,
 					commitDetails: action.commitDetails
+				}
+			case 'SET_CREATE_BRANCH_DETAILS':
+				return {
+					...state,
+					createBranchDetails: action.createBranchDetails
 				}
 			default:
 				return state;
@@ -130,7 +143,13 @@ const store = createReduxStore( 'revisr/store', {
 				branchName: '',
 				commitMessage: '' 
 			};
-		}
+		},
+		getCreateBranchDetails( state ) {
+			const { createBranchDetails } = state;
+			return createBranchDetails || {
+				branchName: '',
+			}
+		},
 	},
 
 	controls: {
@@ -187,13 +206,20 @@ class RevisrPluginComponent extends Component {
 			pullChangesFromRemote, 
 			revertChanges,
 			commitDetails,
-			setCommitDetails
+			setCommitDetails,
+			createNewBranchDetails,
+			createAndSwitchToBranch,
+			setCreateBranchDetails,
+			createBranchDetails,
 		} = this.props;
 
-		const onSubmitSrc = ( event ) => {
+		const onSubmitCommitChanges = ( event ) => {
 			event.preventDefault();
+		};
 
-			console.log('Let us commit!', event, commitDetails );
+		const onSubmitCreateNewBranch = ( event ) => {
+			event.preventDefault();
+			createAndSwitchToBranch( createNewBranchDetails.branchName );
 		};
 
 		let statusMarkup =  <p>No Repository Setup</p>;
@@ -247,7 +273,7 @@ class RevisrPluginComponent extends Component {
 		}
 
 		const commitFormMarkup = <>
-			<form onSubmit={ onSubmitSrc } >
+			<form onSubmit={ onSubmitCommitChanges } >
 				<ToggleControl
 					label={ __( 'Do you want to put these changes into a new branch?' ) }
 					checked={ commitDetails.commitNewBranch }
@@ -311,6 +337,17 @@ class RevisrPluginComponent extends Component {
 				labelPosition="top"
 				required
 			/>
+			<form onSubmit={ onSubmitCreateNewBranch } >
+				<TextControl label="branch" labelposition="top" placeholder="add/theme-name" required
+					value={ createBranchDetails?.branchName }
+					onChange={ ( value ) =>	
+						setCreateBranchDetails( { ...createBranchDetails,
+							branchName: value
+						} )
+					}
+				/>
+				<Button type="submit" variant="secondary">{ __('Create New Branch') } </Button>
+			</form>
 		</>;
 
 		return (
@@ -348,12 +385,30 @@ const RevisrPluginComponentComposed = compose( [
 			fileStatus: select( 'revisr/store' ).getFileStatus(),
 			branches: select( 'revisr/store' ).getBranches(),
 			commitDetails: select( 'revisr/store' ).getCommitDetails(),
+			createNewBranchDetails: select( 'revisr/store' ).getCreateBranchDetails(),
 		};
   	} ),
 	withDispatch( function( dispatch  ) {
 		return {
 			setCommitDetails: (commitDetails)=>{
 				dispatch( 'revisr/store' ).setCommitDetails(commitDetails)
+			},
+			setCreateBranchDetails: (createBranchDetails)=>{
+				dispatch( 'revisr/store' ).setCreateBranchDetails(createBranchDetails)
+			},
+			createAndSwitchToBranch: function ( branchName ) {
+				apiFetch ( { 
+						path: "/revisr/v1/branch", 
+						method: "POST",
+						data: { branch: branchName } 
+					} )
+					.then( ( response ) => {
+						if(response.status === 'OK') {
+							dispatch( 'revisr/store' ).setInfo( response );
+						} else {
+							alert('something went wrong creating branch: ' + response.message );
+						}
+					} );
 			},
 			switchBranch: function( branch) {
 				apiFetch ( { 

@@ -37,6 +37,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 		'methods' => 'GET',
 		'callback' => 'api_get_status',
 	) );
+	register_rest_route( 'revisr/v1', '/branch', array(
+		'methods' => 'POST',
+		'callback' => 'api_create_branch',
+	) );
 } );
 
 function api_get_status( WP_REST_Request $request = null ) {
@@ -153,6 +157,18 @@ function api_get_repo_info ( WP_REST_Request $request = null ) {
 	}
 }
 
+function api_create_branch ( WP_REST_Request $request ) {
+	$branch = $request->get_param( 'branch' );
+	$git = new Revisr_Git_API();
+	$response = $git->create_and_switch_to_branch($branch);
+	if( ! $response->success ) {
+		return new WP_REST_Response( array(
+			'status' => 'FAILURE',
+			'message' => $response->output,
+		) );
+	}
+	return api_get_repo_info();
+}
 
 class Revisr_Git_API_Callback {
 	public $success = false;
@@ -343,5 +359,12 @@ class Revisr_Git_API {
 		return $this->run( 'status', array( '--short', '--untracked-files=all' ) );
 	}
 
-
+	/**
+	 * Creates a new branch and switch to it.
+	 * @access public
+	 * @param  string $branch The name of the branch to create.
+	 */
+	public function create_and_switch_to_branch( $branch ) {
+		return $this->run( 'checkout', array( '-b', $branch ) );
+	}
 }
