@@ -137,9 +137,15 @@ class Revisr_Git {
 	 */
 	public function check_work_tree( $dir = '' ) {
 
+		$this->is_repo = false;
+
 		// If no dir provided, use constant.
 		if ( '' === $dir ) {
 			$dir = $this->get_work_tree();
+		}
+
+		if ( ! $dir) {
+			return false;
 		}
 
 		// Definitely bail if not a directory.
@@ -154,10 +160,10 @@ class Revisr_Git {
 
 		// If not, set the is_repo flag to false.
 		if ( ! $git_toplevel ) {
-			$this->is_repo = false;
 			return false;
 		}
 
+		$this->is_repo = true;
 		return true;
 	}
 
@@ -230,7 +236,8 @@ class Revisr_Git {
 		if ( defined( 'REVISR_WORK_TREE' ) && is_dir( REVISR_WORK_TREE ) ) {
 			$work_tree = REVISR_WORK_TREE;
 		} else {
-			$work_tree = ABSPATH;
+			return null;
+			// $work_tree = ABSPATH;
 		}
 
 		// Remove trailing slash.
