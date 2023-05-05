@@ -41,6 +41,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 		'methods' => 'POST',
 		'callback' => 'api_create_branch',
 	) );
+	register_rest_route( 'revisr/v1', '/commit', array(
+		'methods' => 'POST',
+		'callback' => 'api_commit_changes',
+	) );
 } );
 
 function api_get_status( WP_REST_Request $request = null ) {
@@ -161,6 +165,19 @@ function api_create_branch ( WP_REST_Request $request ) {
 	$branch = $request->get_param( 'branch' );
 	$git = new Revisr_Git_API();
 	$response = $git->create_and_switch_to_branch($branch);
+	if( ! $response->success ) {
+		return new WP_REST_Response( array(
+			'status' => 'FAILURE',
+			'message' => $response->output,
+		) );
+	}
+	return api_get_repo_info();
+}
+
+function api_commit_changes ( WP_REST_Request $request ) {
+	$comment = $request->get_param( 'comment' );
+	$git = new Revisr_Git_API();
+	$response = $git->stage_and_commit( $comment );
 	if( ! $response->success ) {
 		return new WP_REST_Response( array(
 			'status' => 'FAILURE',
@@ -366,5 +383,33 @@ class Revisr_Git_API {
 	 */
 	public function create_and_switch_to_branch( $branch ) {
 		return $this->run( 'checkout', array( '-b', $branch ) );
+	}
+
+	/**
+	 * Stage and commit files to the local repository.
+	 * @access public
+	 * @param  string $message The message to use with the commit.
+	 */
+	public function stage_and_commit( $message ) {
+
+		$git_username = $this->revisr_git->get_config( 'user', 'name' );
+		$git_email =  $this->revisr_git->get_config( 'user', 'email' );
+
+		if ( ! $git_username || ! $git_email ) {
+			$error = new Revisr_Git_API_Callback;
+			$error->output = 'Please set your Git username and email address before comitting.';
+			return $error;
+		}
+
+		$add_result = $this->run( 'add', array( '-A' ) );
+
+		if( ! $add_result->success ) {
+			return $add_result;
+		}
+
+		$author        = "$git_username <$git_email>";
+		$commit_result = $this->run( 'commit', array( '-m', $message, '--author', $author ) );
+
+		return $commit_result;
 	}
 }

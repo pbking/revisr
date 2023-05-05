@@ -206,6 +206,7 @@ class RevisrPluginComponent extends Component {
 			pullChangesFromRemote, 
 			revertChanges,
 			commitDetails,
+			commitAllChanges,
 			setCommitDetails,
 			createNewBranchDetails,
 			createAndSwitchToBranch,
@@ -213,13 +214,26 @@ class RevisrPluginComponent extends Component {
 			createBranchDetails,
 		} = this.props;
 
-		const onSubmitCommitChanges = ( event ) => {
+		async function onSubmitCommitChanges ( event ){
 			event.preventDefault();
+			if ( commitDetails.commitNewBranch ) {
+				await createAndSwitchToBranch( commitDetails.branchName )
+					.catch((error)=>{
+						alert('something went wrong creating branch: ' + error );
+					});
+			}
+			commitAllChanges( commitDetails.commitMessage )
+				.catch((error)=>{
+					alert('something went wrong committing changes: ' + error );
+				});
 		};
 
 		const onSubmitCreateNewBranch = ( event ) => {
 			event.preventDefault();
-			createAndSwitchToBranch( createNewBranchDetails.branchName );
+			createAndSwitchToBranch( createNewBranchDetails.branchName )
+				.catch((error)=>{
+					alert('something went wrong creating branch: ' + error );
+				});
 		};
 
 		let statusMarkup =  <p>No Repository Setup</p>;
@@ -397,18 +411,32 @@ const RevisrPluginComponentComposed = compose( [
 				dispatch( 'revisr/store' ).setCreateBranchDetails(createBranchDetails)
 			},
 			createAndSwitchToBranch: function ( branchName ) {
-				apiFetch ( { 
-						path: "/revisr/v1/branch", 
-						method: "POST",
-						data: { branch: branchName } 
-					} )
-					.then( ( response ) => {
-						if(response.status === 'OK') {
-							dispatch( 'revisr/store' ).setInfo( response );
-						} else {
-							alert('something went wrong creating branch: ' + response.message );
-						}
-					} );
+				return apiFetch ( { 
+					path: "/revisr/v1/branch", 
+					method: "POST",
+					data: { branch: branchName } 
+				} )
+				.then( ( response ) => {
+					if(response.status === 'OK') {
+						dispatch( 'revisr/store' ).setInfo( response );
+					} else {
+						throw  new Error( response.message );
+					}
+				} );
+			},
+			commitAllChanges: function ( comment ) {
+				return apiFetch ( {
+					path: "/revisr/v1/commit",
+					method: "POST",
+					data: { comment: comment }
+				})
+				.then( ( response ) => {
+					if(response.status === 'OK') {
+						dispatch( 'revisr/store' ).setInfo( response );
+					} else {
+						throw  new Error( response.message );
+					}
+				} );
 			},
 			switchBranch: function( branch) {
 				apiFetch ( { 
