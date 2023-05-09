@@ -217,16 +217,28 @@ class RevisrPluginComponent extends Component {
 
 		async function onSubmitCommitChanges ( event ){
 			event.preventDefault();
-			if ( commitDetails.commitNewBranch ) {
-				await createAndSwitchToBranch( commitDetails.branchName )
+			try {
+				if ( commitDetails.commitNewBranch ) {
+					await createAndSwitchToBranch( commitDetails.branchName )
+						.catch((error)=>{
+							throw 'something went wrong creating the branch: ' + error;
+						});
+				}
+				await commitAllChanges( commitDetails.commitMessage )
 					.catch((error)=>{
-						alert('something went wrong creating branch: ' + error );
+						throw 'something went wrong committing changes: ' + error;
 					});
+				if ( commitDetails.pushChanges ) {
+					await pushChangesToRemote()
+						.catch((error)=>{
+							throw 'something went wrong pushing changes: ' + error;
+						});
+				}
+				
+			} 
+			catch (error) {
+				alert( error );
 			}
-			commitAllChanges( commitDetails.commitMessage )
-				.catch((error)=>{
-					alert('something went wrong committing changes: ' + error );
-				});
 		};
 
 		const onSubmitCreateNewBranch = ( event ) => {
