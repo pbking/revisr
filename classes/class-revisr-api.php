@@ -21,6 +21,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 		'methods' => 'GET',
 		'callback' => 'api_get_remote_branches',
 	) );
+	register_rest_route( 'revisr/v1', '/getPullRequestUrl', array(
+		'methods' => 'GET',
+		'callback' => 'api_get_pull_request_url',
+	) );
 	register_rest_route( 'revisr/v1', '/checkout', array(
 		'methods' => 'POST',
 		'callback' => 'api_checkout',
@@ -132,6 +136,36 @@ function api_get_remote_branches ( WP_REST_Request $request ) {
 			'status' => 'NO_REPOSITORY'
       		) );
 	}
+}
+
+function api_get_pull_request_url ( WP_REST_Request $request ) {
+
+	$git = new Revisr_Git_API();
+	$branch = $git->current_branch()->output;
+	
+	$response = $git->run( 'ls-remote', array( '--get-url' ) );
+
+	if ( ! $response->success ) {
+		return new WP_REST_Response( array(
+			'status' => 'FAILURE',
+			'message' => $response->output,
+		) );
+	}
+
+	if ( is_array( $response->output ) ) {
+		$repo_url = preg_replace('/.git$/', '', $response->output[0]);
+		$PR_url =  $repo_url . '/compare/' . $branch . '?expand=1';
+		return new WP_REST_Response( array(
+			'status' => 'OK',
+			'url' => $PR_url,
+		) );
+	}
+
+	return new WP_REST_Response( array(
+		'status' => 'FAILURE',
+		'message' => 'There is no remote setup for this repository.',
+	) );
+
 }
 
 function api_get_repo_info ( WP_REST_Request $request = null ) {

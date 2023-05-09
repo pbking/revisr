@@ -206,6 +206,7 @@ class RevisrPluginComponent extends Component {
 			pullChangesFromRemote, 
 			revertChanges,
 			pushChangesToRemote,
+			openPullRequest,
 			commitDetails,
 			commitAllChanges,
 			setCommitDetails,
@@ -291,8 +292,21 @@ class RevisrPluginComponent extends Component {
 					<Button variant="secondary" label={ __('Push these changes') } onClick={ pushChangesToRemote }>
 						{ __('Push these changes') }
 					</Button>
-					</>
+				</>
 				: '';
+
+		
+			//TODO: I'm sure there's a better way to check to see if this is the main branch...
+			//TODO: Also need to check to see if there's already a pull request open for this branch...
+			let openPullRequestMarkup = info.branch !== 'trunk' && info.branch !== 'master' && info.branch !== 'main' ?
+				<>
+					<p>There is no open pull request for this branch.</p>	
+					<Button variant="secondary" label={ __('Open a Pull Request') } onClick={ openPullRequest }>
+						{ __('Open a Pull Request') }
+					</Button>
+				</>
+				: '';
+
 
 			statusMarkup = <>
 				<p>Current branch: { info.branch }</p>
@@ -303,6 +317,7 @@ class RevisrPluginComponent extends Component {
 				{ pullMarkup }
 				{ changesMarkup }
 				{ pushChangesMarkup }
+				{ openPullRequestMarkup }
 
 				<pre>{JSON.stringify(info, null, ' ')}</pre>
 			</>; 
@@ -513,7 +528,20 @@ const RevisrPluginComponentComposed = compose( [
 							alert('something went wrong pushing changes: ' + response.message );
 						}	
 					} );
-			}
+			},
+			openPullRequest: function() {
+				apiFetch ( {
+						path: "/revisr/v1/getPullRequestUrl",
+						method: "GET"
+					} )	
+					.then( ( response ) => {
+						if(response.status === 'OK') {
+							window.open(response.url, '_blank');
+						} else {	
+							alert('something went wrong getting the pull request URL: ' + response.message );
+						}	
+					} );
+			},
 		}
 	} ),
 ] )( RevisrPluginComponent )
