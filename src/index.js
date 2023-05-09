@@ -205,6 +205,7 @@ class RevisrPluginComponent extends Component {
 			switchBranch, 
 			pullChangesFromRemote, 
 			revertChanges,
+			pushChangesToRemote,
 			commitDetails,
 			commitAllChanges,
 			setCommitDetails,
@@ -272,6 +273,15 @@ class RevisrPluginComponent extends Component {
 				</>
 				: <p>No changes to commit.</p>;
 
+			let pushChangesMarkup = info.count_unpushed > 0 ?
+				<>
+					<p>You have { info.count_unpushed } local changes that aren't in the remote repository.</p>
+					<Button variant="secondary" label={ __('Push these changes') } onClick={ pushChangesToRemote }>
+						{ __('Push these changes') }
+					</Button>
+					</>
+				: '';
+
 			statusMarkup = <>
 				<p>Current branch: { info.branch }</p>
 				<NavigatorButton variant="secondary" path="/switchBranch" >
@@ -280,6 +290,7 @@ class RevisrPluginComponent extends Component {
 	
 				{ pullMarkup }
 				{ changesMarkup }
+				{ pushChangesMarkup }
 
 				<pre>{JSON.stringify(info, null, ' ')}</pre>
 			</>; 
@@ -476,6 +487,19 @@ const RevisrPluginComponentComposed = compose( [
 						} else {
 							alert('something went wrong reverting changes: ' + response.message );
 						}
+					} );
+			},
+			pushChangesToRemote: function() {
+				apiFetch ( {
+						path: "/revisr/v1/push",
+						method: "POST"
+					} )	
+					.then( ( response ) => {
+						if(response.status === 'OK') {
+							dispatch( 'revisr/store' ).setInfo( response );
+						} else {	
+							alert('something went wrong pushing changes: ' + response.message );
+						}	
 					} );
 			}
 		}

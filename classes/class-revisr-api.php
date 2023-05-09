@@ -45,6 +45,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 		'methods' => 'POST',
 		'callback' => 'api_commit_changes',
 	) );
+	register_rest_route( 'revisr/v1', '/push', array(
+		'methods' => 'POST',
+		'callback' => 'api_push_changes',
+	) );
 } );
 
 function api_get_status( WP_REST_Request $request = null ) {
@@ -178,6 +182,18 @@ function api_commit_changes ( WP_REST_Request $request ) {
 	$comment = $request->get_param( 'comment' );
 	$git = new Revisr_Git_API();
 	$response = $git->stage_and_commit( $comment );
+	if( ! $response->success ) {
+		return new WP_REST_Response( array(
+			'status' => 'FAILURE',
+			'message' => $response->output,
+		) );
+	}
+	return api_get_repo_info();
+}
+
+function api_push_changes ( WP_REST_Request $request ) {
+	$git = new Revisr_Git_API();
+	$response = $git->push();
 	if( ! $response->success ) {
 		return new WP_REST_Response( array(
 			'status' => 'FAILURE',
@@ -412,4 +428,31 @@ class Revisr_Git_API {
 
 		return $commit_result;
 	}
+
+	/**
+	 * Pushes changes to the remote repository.
+	 * @access public
+	 */
+	public function push() {
+		// Get stored remote
+		$check_remote_result = $this->run( 'ls-remote', array( '--get-url' ) );
+		if ( $check_remote_result->success && is_array( $check_remote_result->output ) ) {
+			$remote = $check_remote_result->output[0];
+		} else {
+			$remote = '';
+		}
+
+		// Get stored credentials
+		$git_password = $this->revisr_git->get_config( 'user', 'password' );
+		$git_username = $this->revisr_git->get_config( 'user', 'name' );
+		$git_credentials = "";
+		if ( $git_password ) {
+			$git_credentials = $git_username . ":" . $git_password . "@";
+		}
+
+		$remote = str_replace( 'https://', 'https://' . $git_credentials, $remote );
+
+		return $this->run( 'push', array( $remote, 'HEAD', '--quiet' ) );
+	}
+
 }

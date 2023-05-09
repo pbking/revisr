@@ -110,22 +110,22 @@ class Revisr_Settings {
     		array( $this->settings_fields, 'automatic_backups_callback' ),
     		'revisr_general_settings',
     		'revisr_general_settings'
-		);
+	);
     	add_settings_field(
     		'notifications',
     		__( 'Enable email notifications?', 'revisr' ),
     		array( $this->settings_fields, 'notifications_callback' ),
     		'revisr_general_settings',
     		'revisr_general_settings'
-		);
-		add_settings_field(
-			'uninstall_on_delete',
-			__( 'Remove data on uninstall?', 'revisr' ),
-			array( $this->settings_fields, 'uninstall_on_delete_callback' ),
-			'revisr_general_settings',
-			'revisr_general_settings'
-		);
-		add_settings_field(
+	);
+	add_settings_field(
+		'uninstall_on_delete',
+		__( 'Remove data on uninstall?', 'revisr' ),
+		array( $this->settings_fields, 'uninstall_on_delete_callback' ),
+		'revisr_general_settings',
+		'revisr_general_settings'
+	);
+	add_settings_field(
             'remote_name',
             __( 'Remote Name', 'revisr'),
             array( $this->settings_fields, 'remote_name_callback' ),
@@ -136,6 +136,13 @@ class Revisr_Settings {
             'remote_url',
             __( 'Remote URL', 'revisr'),
             array( $this->settings_fields, 'remote_url_callback' ),
+            'revisr_remote_settings',
+            'revisr_remote_settings'
+        );
+        add_settings_field(
+            'git_password',
+            __( 'Git Password', 'revisr'),
+            array( $this->settings_fields, 'git_password_callback' ),
             'revisr_remote_settings',
             'revisr_remote_settings'
         );
