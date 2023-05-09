@@ -220,21 +220,16 @@ class RevisrPluginComponent extends Component {
 			event.preventDefault();
 			try {
 				if ( commitDetails.commitNewBranch ) {
-					await createAndSwitchToBranch( commitDetails.branchName )
-						.catch((error)=>{
-							throw 'something went wrong creating the branch: ' + error;
-						});
+					await createAndSwitchToBranch( commitDetails.branchName );
 				}
 				await commitAllChanges( commitDetails.commitMessage )
-					.catch((error)=>{
-						throw 'something went wrong committing changes: ' + error;
-					});
 				if ( commitDetails.pushChanges ) {
-					await pushChangesToRemote()
-						.catch((error)=>{
-							throw 'something went wrong pushing changes: ' + error;
-						});
+					await pushChangesToRemote();
 				}
+				if ( commitDetails.openPullRequestForNewBranch ) {
+					await openPullRequest();
+				}
+				alert( 'Changes Committed');
 				
 			} 
 			catch (error) {
@@ -245,10 +240,20 @@ class RevisrPluginComponent extends Component {
 		const onSubmitCreateNewBranch = ( event ) => {
 			event.preventDefault();
 			createAndSwitchToBranch( createNewBranchDetails.branchName )
-				.catch((error)=>{
-					alert('something went wrong creating branch: ' + error );
-				});
+				.catch(alert);
 		};
+
+		const onClickPushChangesToRemote = ( event ) => {
+			event.preventDefault();
+			pushChangesToRemote()
+				.catch (alert);
+		}
+
+		const onClickOpenPullRequest = ( event ) => {
+			event.preventDefault();
+			openPullRequest()
+				.catch (alert);
+		}
 
 		let statusMarkup =  <p>No Repository Setup</p>;
 
@@ -289,7 +294,7 @@ class RevisrPluginComponent extends Component {
 			let pushChangesMarkup = info.count_unpushed > 0 ?
 				<>
 					<p>You have { info.count_unpushed } local changes that aren't in the remote repository.</p>
-					<Button variant="secondary" label={ __('Push these changes') } onClick={ pushChangesToRemote }>
+					<Button variant="secondary" label={ __('Push these changes') } onClick={ onClickPushChangesToRemote }>
 						{ __('Push these changes') }
 					</Button>
 				</>
@@ -301,7 +306,7 @@ class RevisrPluginComponent extends Component {
 			let openPullRequestMarkup = info.branch !== 'trunk' && info.branch !== 'master' && info.branch !== 'main' ?
 				<>
 					<p>There is no open pull request for this branch.</p>	
-					<Button variant="secondary" label={ __('Open a Pull Request') } onClick={ openPullRequest }>
+					<Button variant="secondary" label={ __('Open a Pull Request') } onClick={ onClickOpenPullRequest }>
 						{ __('Open a Pull Request') }
 					</Button>
 				</>
@@ -458,7 +463,7 @@ const RevisrPluginComponentComposed = compose( [
 					if(response.status === 'OK') {
 						dispatch( 'revisr/store' ).setInfo( response );
 					} else {
-						throw  new Error( response.message );
+						throw 'Somethign went wrong creating a new branch: ' + response.message;
 					}
 				} );
 			},
@@ -472,12 +477,12 @@ const RevisrPluginComponentComposed = compose( [
 					if(response.status === 'OK') {
 						dispatch( 'revisr/store' ).setInfo( response );
 					} else {
-						throw  new Error( response.message );
+						throw 'Something went wrong commit changes: ' + response.message;
 					}
 				} );
 			},
 			switchBranch: function( branch) {
-				apiFetch ( { 
+				return apiFetch ( { 
 						path: "/revisr/v1/checkout", 
 						method: "POST",
 						data: { branch: branch } 
@@ -486,12 +491,12 @@ const RevisrPluginComponentComposed = compose( [
 						if(response.status === 'OK') {
 							dispatch( 'revisr/store' ).setInfo( response );
 						} else {
-							alert('something went wrong switching branches: ' + response.message );
+							throw 'Something went wrong switching branches: ' + response.message;
 						}
 					} );
 			},
 			pullChangesFromRemote: function() {
-				apiFetch ( { 
+				return apiFetch ( { 
 						path: "/revisr/v1/pull", 
 						method: "POST"
 					} )
@@ -499,12 +504,12 @@ const RevisrPluginComponentComposed = compose( [
 						if(response.status === 'OK') {
 							dispatch( 'revisr/store' ).setInfo( response );
 						} else {
-							alert('Something went wrong pulling changes: ' + response.message );
+							throw 'Something went wrong pulling changes: ' + response.message;
 						}
 					} );
 			},
 			revertChanges: function() {
-				apiFetch ( { 
+				return apiFetch ( { 
 						path: "/revisr/v1/revert", 
 						method: "POST"
 					} )
@@ -512,12 +517,12 @@ const RevisrPluginComponentComposed = compose( [
 						if(response.status === 'OK') {
 							dispatch( 'revisr/store' ).setInfo( response );
 						} else {
-							alert('something went wrong reverting changes: ' + response.message );
+							throw 'Something went wrong reverting changes: ' + response.message;
 						}
 					} );
 			},
 			pushChangesToRemote: function() {
-				apiFetch ( {
+				return apiFetch ( {
 						path: "/revisr/v1/push",
 						method: "POST"
 					} )	
@@ -525,12 +530,12 @@ const RevisrPluginComponentComposed = compose( [
 						if(response.status === 'OK') {
 							dispatch( 'revisr/store' ).setInfo( response );
 						} else {	
-							alert('something went wrong pushing changes: ' + response.message );
+							throw 'Something went wrong pushing changes: ' + response.message;
 						}	
 					} );
 			},
 			openPullRequest: function() {
-				apiFetch ( {
+				return apiFetch ( {
 						path: "/revisr/v1/getPullRequestUrl",
 						method: "GET"
 					} )	
@@ -538,7 +543,7 @@ const RevisrPluginComponentComposed = compose( [
 						if(response.status === 'OK') {
 							window.open(response.url, '_blank');
 						} else {	
-							alert('something went wrong getting the pull request URL: ' + response.message );
+							throw 'Something went wrong getting the pull request URL: ' + response.message;
 						}	
 					} );
 			},
